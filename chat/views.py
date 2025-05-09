@@ -4,7 +4,7 @@ from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status]
+from rest_framework import status
 from .handlers import handle_close_conversation, handle_new_conversation, handle_new_message
 from . import models
 from . import serializers
@@ -23,13 +23,9 @@ def conversation_webhook(request):
 
     try:
         data = json.loads(request.body)
-    except json.JSONDecodeError:
-        return HttpResponseBadRequest("Invalid JSON payload.")
 
-    # Perform different actions based on the event type
-    event_type = data.get("type")
+        event_type = data.get("type")
 
-    try:
         if event_type == "NEW_CONVERSATION":
             return handle_new_conversation(data)
         elif event_type == "CLOSE_CONVERSATION":
@@ -40,5 +36,7 @@ def conversation_webhook(request):
             return HttpResponseBadRequest("Unhandled event type.")
     except ValidationError:
         return HttpResponseBadRequest("Id is not valid.")
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Invalid JSON payload.")
 
 
