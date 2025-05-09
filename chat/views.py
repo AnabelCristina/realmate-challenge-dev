@@ -28,26 +28,35 @@ def conversation_webhook(request):
     event_type = data.get("type")
 
     if event_type == "NEW_CONVERSATION":
-        handle_new_conversation(data)
+        return handle_new_conversation(data)
     elif event_type == "CLOSE_CONVERSATION":
-        handle_close_conversation(data)
+        return handle_close_conversation(data)
     elif event_type == "NEW_MESSAGE":
-        handle_new_message(data)
+        return handle_new_message(data)
     else:
         return HttpResponseBadRequest("Unhandled event type.")
 
-    return JsonResponse({"status": "success"})
 
 def handle_new_conversation(data):
+    conversation = models.Conversation.objects.filter(pk=data.get('data').get('id'))
+    
+    if conversation.exists():
+       return HttpResponseBadRequest("Invalid ID. ID already in use.")
+    
     serializers.ConversationSerializer.create(data=data)
-
-    print(f"Conversation {data.conversation_id} created.")
+    return JsonResponse({"status": "success"})
 
 def handle_close_conversation(data):
-    conversation = models.Conversation.objects.get(pk=data.get('data').get('id'))
-    serializers.ConversationSerializer.update(conversation, data=data)
+
+    conversation = models.Conversation.objects.filter(pk=data.get('data').get('id'))
+
+    if not conversation.exists():
+       return HttpResponseBadRequest("Invalid ID. ID doesn't exists.")
     
-    print(f"Conversation {data.conversation_id} closed.")
+    conversation = models.Conversation.objects.get(pk=data.get('data').get('id'))
+    serializers.ConversationSerializer.close(conversation, data=data)
+    
+    return JsonResponse({"status": "success"})
 
 def handle_new_message(data):
     conversation = models.Conversation.objects.get(pk=data.get('data').get('id'))
@@ -56,4 +65,4 @@ def handle_new_message(data):
 
     serializers.MessageSerializer.create(data=data)
     
-    print(f"Message received. message_id = {data.message_id}")
+    return JsonResponse({"status": "success"})
