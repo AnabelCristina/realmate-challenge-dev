@@ -59,6 +59,7 @@ def handle_close_conversation(data):
     return JsonResponse({"status": "success"})
 
 def handle_new_message(data):
+
     conversation = models.Conversation.objects.filter(pk=data.get('data').get('conversation_id'))
     if not conversation.exists():
         return HttpResponseBadRequest("Conversation doesn't exists.")
@@ -70,6 +71,9 @@ def handle_new_message(data):
     message = models.Message.objects.filter(pk=data.get('data').get('id'))
     if message.exists():
         return HttpResponseBadRequest("Invalid Message ID. ID already in use.")
+    
+    if data.get('data').get('direction') not in ['RECEIVED', 'SENT']:
+        return HttpResponseBadRequest("Invalid direction. Values allowed are RECEIVED or SENT.")
 
     serializers.MessageSerializer.create(data=data)
     

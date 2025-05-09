@@ -16,7 +16,6 @@ class MessageSerializer(serializers.ModelSerializer):
         return Message.objects.create(id=id, message_type = message_type, content=content, 
                                              created_at=created_at, conversation_id=conversation_id)
                                       
-    
 
 class ConversationSerializer(serializers.ModelSerializer):
     messages = MessageSerializer(many=True, read_only=True)
