@@ -1,5 +1,6 @@
 import json
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.forms import ValidationError
+from django.http import HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -27,14 +28,18 @@ def conversation_webhook(request):
     # Perform different actions based on the event type
     event_type = data.get("type")
 
-    if event_type == "NEW_CONVERSATION":
-        return handle_new_conversation(data)
-    elif event_type == "CLOSE_CONVERSATION":
-        return handle_close_conversation(data)
-    elif event_type == "NEW_MESSAGE":
-        return handle_new_message(data)
-    else:
-        return HttpResponseBadRequest("Unhandled event type.")
+    try:
+        if event_type == "NEW_CONVERSATION":
+            return handle_new_conversation(data)
+        elif event_type == "CLOSE_CONVERSATION":
+            return handle_close_conversation(data)
+        elif event_type == "NEW_MESSAGE":
+            return handle_new_message(data)
+        else:
+            return HttpResponseBadRequest("Unhandled event type.")
+    except ValidationError:
+        return HttpResponseBadRequest("Id is not valid.")
+
 
 
 def handle_new_conversation(data):
@@ -44,7 +49,7 @@ def handle_new_conversation(data):
        return HttpResponseBadRequest("Invalid Conversation ID. ID already in use.")
     
     serializers.ConversationSerializer.create(data=data)
-    return JsonResponse({"status": "success"})
+    return Response(status=status.HTTP_200_OK)
 
 def handle_close_conversation(data):
 
@@ -54,9 +59,12 @@ def handle_close_conversation(data):
        return HttpResponseBadRequest("Invalid ID. ID doesn't exists.")
     
     conversation = models.Conversation.objects.get(pk=data.get('data').get('id'))
+    if conversation.is_closed():
+        return HttpResponseBadRequest("Conversation is closed already.")
+
     serializers.ConversationSerializer.close(conversation, data=data)
     
-    return JsonResponse({"status": "success"})
+    return Response(status=status.HTTP_200_OK)
 
 def handle_new_message(data):
 
@@ -77,4 +85,4 @@ def handle_new_message(data):
 
     serializers.MessageSerializer.create(data=data)
     
-    return JsonResponse({"status": "success"})
+    return Response(status=status.HTTP_200_OK)
