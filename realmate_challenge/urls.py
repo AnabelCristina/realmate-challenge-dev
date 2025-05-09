@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from realmate_challenge import views
+from chat import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),

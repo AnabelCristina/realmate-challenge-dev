@@ -24,7 +24,6 @@ def conversation_webhook(request):
             handle_message_received(data)
         if data.get("data").get("direction") == "SENT":
             handle_message_sent(data)
-    
     else:
         return HttpResponseBadRequest("Unhandled event type.")
 
