@@ -1,6 +1,7 @@
 import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
+from chat import models
 
 @csrf_exempt 
 def conversation_webhook(request):
@@ -20,10 +21,7 @@ def conversation_webhook(request):
     elif event_type == "CLOSE_CONVERSATION":
         handle_close_conversation(data)
     elif event_type == "NEW_MESSAGE":
-        if data.get("data").get("direction") == "RECEIVED":
-            handle_message_received(data)
-        if data.get("data").get("direction") == "SENT":
-            handle_message_sent(data)
+        handle_new_message(data)
     else:
         return HttpResponseBadRequest("Unhandled event type.")
 
@@ -32,27 +30,36 @@ def conversation_webhook(request):
 def handle_new_conversation(data):
     timestamp = data["timestamp"]
     conversation_id = data["data"]["id"]
-    #Update the database // notify the user
-    print(f"Conversartion {conversation_id} created.")
+    
+    new_conversation = models.Conversation.create_conversation(conversation_id, "OPEN", timestamp)
+    new_conversation.save()
+    
+    print(f"Conversation {conversation_id} created.")
 
 def handle_close_conversation(data):
     timestamp = data["timestamp"]
     conversation_id = data["data"]["id"]
-    #Update the database // notify the user
-    print(f"Conversartion {conversation_id} closed.")
+   
+    conversation = models.Conversation.objects.get(pk=conversation_id)
+    conversation.state = "CLOSED"
+    conversation.closed_at = timestamp
+    conversation.save()
+    
+    print(f"Conversation {conversation_id} closed.")
 
-def handle_message_received(data):
+def handle_new_message(data):
+
+    conversation = models.Conversation.objects.get(pk=conversation_id)
+    if conversation.state == "CLOSED":
+        return HttpResponseBadRequest("Conversation is closed, unable to send new messages.")
+
     timestamp = data["timestamp"]
     conversation_id = data["data"]["conversation_id"]
     message_id = data["data"]["id"]
     message = data["data"]["content"]
-    #Update the database // notify the user
+    message_type = data["data"]["direction"]
+
+    new_message = models.Message.new_message(message_id, message_type, timestamp, message, conversation_id)
+    new_message.save()
+    
     print(f"Message received. message_id = {message_id}")
-
-def handle_message_sent(data):
-    timestamp = data["timestamp"]
-    conversation_id = data["data"]["conversation_id"]
-    message_id = data["data"]["id"]
-    message = data["data"]["content"]
-    #Update the database // notify the user
-    print(f"Message sent. message_id = {message_id}")
