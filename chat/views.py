@@ -50,7 +50,7 @@ def handle_close_conversation(data):
 def handle_new_message(data):
 
     conversation = models.Conversation.objects.get(pk=conversation_id)
-    if conversation.state == "CLOSED":
+    if conversation.is_closed():
         return HttpResponseBadRequest("Conversation is closed, unable to send new messages.")
 
     timestamp = data["timestamp"]
