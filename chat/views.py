@@ -5,15 +5,15 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from .services import get_conversation_by_id
 from .handlers import handle_close_conversation, handle_new_conversation, handle_new_message
 from . import models
 from . import serializers
 
 @api_view(['GET'])
 def conversation_details(request, pk):
-    conversation = models.Conversation.objects.get(id=pk)
-    serializer = serializers.ConversationSerializer(conversation)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    conversation = get_conversation_by_id(pk)
+    return Response(conversation.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 @csrf_exempt 
@@ -23,7 +23,6 @@ def conversation_webhook(request):
 
     try:
         data = json.loads(request.body)
-
         event_type = data.get("type")
 
         if event_type == "NEW_CONVERSATION":

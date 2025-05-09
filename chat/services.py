@@ -1,15 +1,10 @@
 from .models import Message, Conversation
+from rest_framework.response import Response
+from .serializers import ConversationSerializer
+from rest_framework import status
 
-def conversation_exists(data):
-    conversation = Conversation.objects.filter(pk=data.get('data').get('id'))
-    return conversation.exists()
-
-def message_exists(data):
-    message = Message.objects.filter(pk=data.get('data').get('id'))
-    return message.exists()
-
-def conversation_is_closed(data):
-    conversation = Conversation.objects.get(pk=data.get('data').get('conversation_id'))
+def conversation_is_closed(id):
+    conversation = Conversation.objects.get(pk=id)
     return conversation.is_closed()
 
 def message_direction(data):
@@ -22,10 +17,11 @@ def create_conversation(data):
 
     Conversation.objects.create(id=id, state = state, created_at = created_at)
 
-def close_conversation(instance, data):
-    instance.state = data.get('state', "CLOSED")
-    instance.closed_at = data.get('closed_at', instance.closed_at)
-    instance.save()
+def close_conversation(data, id):
+    conversation = Conversation.objects.get(pk=id)
+    conversation.state = "CLOSED"
+    conversation.closed_at = data.get('timestamp')
+    conversation.save()
 
 def create_message(data):
     id = data.get('data').get('id')
@@ -36,3 +32,7 @@ def create_message(data):
 
     Message.objects.create(id=id, message_type = message_type, content=content, 
                                             created_at=created_at, conversation_id=conversation_id)
+    
+def get_conversation_by_id(id):
+    conversation = Conversation.objects.get(pk=id)
+    return ConversationSerializer(conversation)
