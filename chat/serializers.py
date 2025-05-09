@@ -11,7 +11,7 @@ class MessageSerializer(serializers.ModelSerializer):
         message_type = data.get('data').get('direction')
         content = data.get('data').get('content')
         created_at = data.get('timestamp')
-        conversation_id = data.get('data').get('conversation_id')
+        conversation_id = Conversation.objects.get(pk=data.get('data').get('conversation_id'))
 
         return Message.objects.create(id=id, message_type = message_type, content=content, 
                                              created_at=created_at, conversation_id=conversation_id)

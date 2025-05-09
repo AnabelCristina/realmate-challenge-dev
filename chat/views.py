@@ -41,7 +41,7 @@ def handle_new_conversation(data):
     conversation = models.Conversation.objects.filter(pk=data.get('data').get('id'))
     
     if conversation.exists():
-       return HttpResponseBadRequest("Invalid ID. ID already in use.")
+       return HttpResponseBadRequest("Invalid Conversation ID. ID already in use.")
     
     serializers.ConversationSerializer.create(data=data)
     return JsonResponse({"status": "success"})
@@ -59,9 +59,17 @@ def handle_close_conversation(data):
     return JsonResponse({"status": "success"})
 
 def handle_new_message(data):
-    conversation = models.Conversation.objects.get(pk=data.get('data').get('id'))
+    conversation = models.Conversation.objects.filter(pk=data.get('data').get('conversation_id'))
+    if not conversation.exists():
+        return HttpResponseBadRequest("Conversation doesn't exists.")
+    
+    conversation = models.Conversation.objects.get(pk=data.get('data').get('conversation_id'))
     if conversation.is_closed():
         return HttpResponseBadRequest("Conversation is closed, unable to send new messages.")
+    
+    message = models.Message.objects.filter(pk=data.get('data').get('id'))
+    if message.exists():
+        return HttpResponseBadRequest("Invalid Message ID. ID already in use.")
 
     serializers.MessageSerializer.create(data=data)
     

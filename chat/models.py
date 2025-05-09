@@ -11,7 +11,6 @@ class Conversation(models.Model):
     created_at = models.DateTimeField()
     closed_at = models.DateTimeField(blank=True, null= True, default=None)
 
-    @property
     def is_closed(self):
         return self.state == "CLOSED"
     
