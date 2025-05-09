@@ -10,7 +10,7 @@ class Conversation(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     state = models.CharField(max_length=10, choices=StateChoices.choices, default=StateChoices.OPEN)
     created_at = models.DateTimeField()
-    closed_at = models.DateTimeField()
+    closed_at = models.DateTimeField(blank=True, null= True)
 
     @property
     def is_open(self):
