@@ -1,8 +1,19 @@
 import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
-from chat import models
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from . import models
+from . import serializers
 
+@api_view(['GET'])
+def conversation_details(request, pk):
+    conversation = models.Conversation.objects.get(id=pk)
+    serializer = serializers.ConversationSerializer(conversation)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
 @csrf_exempt 
 def conversation_webhook(request):
     if request.method != "POST":
@@ -28,38 +39,21 @@ def conversation_webhook(request):
     return JsonResponse({"status": "success"})
 
 def handle_new_conversation(data):
-    timestamp = data["timestamp"]
-    conversation_id = data["data"]["id"]
-    
-    new_conversation = models.Conversation.create_conversation(conversation_id, "OPEN", timestamp)
-    new_conversation.save()
-    
-    print(f"Conversation {conversation_id} created.")
+    serializers.ConversationSerializer.create(data=data)
+
+    print(f"Conversation {data.conversation_id} created.")
 
 def handle_close_conversation(data):
-    timestamp = data["timestamp"]
-    conversation_id = data["data"]["id"]
-   
-    conversation = models.Conversation.objects.get(pk=conversation_id)
-    conversation.state = "CLOSED"
-    conversation.closed_at = timestamp
-    conversation.save()
+    conversation = models.Conversation.objects.get(pk=data.get('data').get('id'))
+    serializers.ConversationSerializer.update(conversation, data=data)
     
-    print(f"Conversation {conversation_id} closed.")
+    print(f"Conversation {data.conversation_id} closed.")
 
 def handle_new_message(data):
-
-    conversation = models.Conversation.objects.get(pk=conversation_id)
+    conversation = models.Conversation.objects.get(pk=data.get('data').get('id'))
     if conversation.is_closed():
         return HttpResponseBadRequest("Conversation is closed, unable to send new messages.")
 
-    timestamp = data["timestamp"]
-    conversation_id = data["data"]["conversation_id"]
-    message_id = data["data"]["id"]
-    message = data["data"]["content"]
-    message_type = data["data"]["direction"]
-
-    new_message = models.Message.new_message(message_id, message_type, timestamp, message, conversation_id)
-    new_message.save()
+    serializers.MessageSerializer.create(data=data)
     
-    print(f"Message received. message_id = {message_id}")
+    print(f"Message received. message_id = {data.message_id}")

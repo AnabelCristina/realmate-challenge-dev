@@ -2,7 +2,6 @@ from django.db import models
 import uuid
 
 class Conversation(models.Model):
-
     class StateChoices(models.TextChoices):
         OPEN = "OPEN"
         CLOSED = "CLOSED"

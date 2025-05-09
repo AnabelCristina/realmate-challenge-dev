@@ -16,10 +16,9 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path
-from chat import views
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("webhook/", views.conversation_webhook, name="conversation_webhook"),
+    path("chat/", include('chat.urls')),
 ]
